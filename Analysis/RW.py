@@ -1,8 +1,9 @@
-from Models.Models.CommitInfo_pb2 import CommitInfo
-from Models.Models.Project_pb2 import Project
 from os.path import join as join
 from os.path import dirname as parent
 from os.path import realpath as realPath
+from TypeChangeCommit_pb2 import TypeChangeCommit
+from Models.Models.CommitInfo_pb2 import CommitInfo
+from Models.Models.Project_pb2 import Project
 
 
 def readFile(filename):
@@ -12,16 +13,20 @@ def readFile(filename):
         filehandle.close()
         return s
     except:
-        print(filename,  ' Not found')
+        # print(filename,  ' Not found')
         return ''
 
 fileDir = parent(parent(parent(realPath('__file__'))))
 pathToProtos = join(fileDir, 'TypeChangeMiner/Input/ProtosOut/')
 
 
-def readAll(fileName, kind):
-    sizes = list(map(lambda s: int(s),filter(lambda s: s != '', readFile(join(pathToProtos, fileName + 'BinSize.txt')).split(" "))))
-    buf = join(pathToProtos, fileName + '.txt')
+def readAll(fileName, kind, protos=pathToProtos):
+    sizeFile = readFile(join(protos, fileName + 'BinSize.txt'))
+    if(sizeFile == ''):
+        # print(fileName, " Not found")
+        return []
+    sizes = list(map(lambda s: int(s), filter(lambda s: s != '', sizeFile.split(" "))))
+    buf = join(protos, fileName + '.txt')
     l = []
     with open(buf, 'rb') as f:
         buf = f.read()
@@ -34,6 +39,8 @@ def readAll(fileName, kind):
                 c = CommitInfo()
             if kind == "Project":
                 c = Project()
+            if kind == "TypeChangeCommit":
+                c = TypeChangeCommit()
             if c is not None:
                 c.ParseFromString(msg_buf)
                 l.append(c)
