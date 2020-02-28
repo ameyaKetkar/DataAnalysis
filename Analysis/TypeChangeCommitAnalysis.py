@@ -1,172 +1,398 @@
-from numpy import take
-
-from Analysis.RW import readAll
-import pandas as pd
-from pandas import DataFrame as df
+import statistics
 from collections import Counter as C
 from collections import namedtuple as nt
-from os.path import join as join
 from os.path import dirname as parent
-from os.path import realpath as realPath
-
-from ElementKind_pb2 import ElementKind
-from PrettyPrint import pretty, prettyNameSpace
+from os.path import join as join
+from os.path import realpath as realpath
 import Analysis.CreatePlots as cp
-from TypeChangeAnalysis_pb2 import TypeChangeAnalysis
+import git
+import time
+import pandas as pd
+import scipy.stats as stats
+import scikit_posthocs as posthocs
+import PrettyPrint as Pretty
+from Analysis.AnalysisFns import tca_tci_analysis, theWorldContains, mergeDict, mergeDictSet
+from Analysis.RW import readAll
+import re
 
-TypeChange = nt('TypeChange', ['before', 'after'])
-Mapping = nt ('Mapping',['nameB4', 'nameAfter', 'before', 'after'])
+f = open('/Users/ameya/Research/TypeChangeStudy/migrations.csv')
+lines = f.readlines()
+f.close()
+res = []
+for ls in lines:
+    if ls.count('.') > 1:
+        zs = [ls[i:i+4] for i in range(0, len(ls), 4)]
+        for xx in zs:
+            yy = xx.replace('\n', '')
+            if len(yy) >0 :
+                f1 = float(yy)
+                if(f1 < 1.0):
+                    res.append(f1)
+
+    else:
+        z = ls.replace('\n', '')
+        f2 = float(z)
+        if f2 < 1.0:
+            res.append(f2)
+
+
+for r in res:
+    if r > 100:
+        print(r)
+
+migrationMionerMap = {}
+migrationMionerMap.setdefault('',res)
+
+
+cp.violin(migrationMionerMap, xlabel="Migration", ylabel="Ratio", isLog=False, height=3 )
+
+
+
+fileDir = parent(parent(parent(realpath('__file__'))))
+pathToTypeChanges = join(fileDir, 'TypeChangeMiner/Output/')
+
+Mapping = nt('Mapping', ['nameB4', 'nameAfter', 'before', 'after'])
 TypeChangeExample = nt('TypeChangeExample', ['before', 'after', 'mappings'])
 
-projs = readAll("Projects", "Project")
-fileDir = parent(parent(parent(realPath('__file__'))))
+projects = readAll("Projects", "Project")  # [:10]
+
+projects = list(filter(
+    lambda x: 'jfreechart' not in x.name and '99' not in x.name and 'comma' not in x.name and 'binnavi' not in x.name,
+    projects))
+
+
+#
+# theWorld = C({})
+# typeChangeCommits = C({})
+# for p in projects:
+#     theWorld += C({'TheWorld': len(readAll("TheWorld_" + p.name, "TheWorld", pathToTypeChanges))})
+#     typeChangeCommits += C({"Commits": len(readAll("TypeChangeCommit_" + p.name, "TypeChangeCommit", protos=pathToTypeChanges))})
+
+
+def getSubDict1(fromDict: dict, orFromDict: dict, forKeys) -> dict:
+    d = {}
+    for l in forKeys:
+        if l[1] in fromDict.keys():
+            d[l[1]] = fromDict[l[1]]
+        else:
+            if l[1] in orFromDict:
+                d[l[1]] = len(orFromDict[l[1]])
+    return d
+
+
+def getSubDict(fromDict: dict, forKeys) -> dict:
+    d = {}
+    for l in forKeys:
+        if l[1] in fromDict.keys():
+            d[l[1]] = fromDict[l[1]]
+    return d
+
+
+def calculateProportions(feats, name, project_int_commands, label=False):
+    ratios = {}
+    featureMapProps = {}
+    total_count = 0
+    for feat in feats:
+        if 'DontKnow' not in feat[0] and 'TypeVariable' not in feat[0] and 'DontKnow' not in feat[1]:
+            total_count += project_int_commands[feat[1]]
+    for feat in feats:
+        if 'DontKnow' not in feat[0] and 'TypeVariable' not in feat[0]:
+            if not label:
+                featureMapProps.setdefault('Project-level proportion' + name, set()).add(
+                    ('Proportion each project of ' + feat[0], "P " + feat[0]))
+                ratios.setdefault("P " + feat[0], []).append(project_int_commands[feat[1]] / total_count)
+                z = project_int_commands[feat[1]] / total_count
+                if z == 1.0:
+                    print()
+            else:
+                x = feat[1].replace('noOf', '').replace('TCI', '')
+                x = ''.join(map(lambda x: x if x.islower() else " " + x, x))
+                featureMapProps.setdefault('Project-level proportion' + name, set()).add(
+                    ('Proportion each project of ' + x, "P " + x))
+                z = project_int_commands[feat[1]] / total_count
+                if z == 1.0:
+                    print()
+                ratios.setdefault("P " + x, []).append(z)
+
+    return [ratios, featureMapProps]
+
+
+def normalizeProjectLevel(feats, theWorldFeats, name, project_int_commands, label=False):
+    ratios = {}
+    featureMapProps = {}
+    for feat in feats:
+        if 'DontKnow' not in feat[1] and 'TypeVariable' not in feat[1]:
+            for worldFeat in theWorldFeats:
+                if feat[0] == worldFeat[0]:
+                    if not label:
+                        featureMapProps.setdefault('Project-level frequency ' + name, set()).add(
+                            ('Freq for each project ' + feat[0], "F " + feat[0]))
+                        ratios.setdefault("F " + feat[0], []).append(
+                            project_int_commands[feat[1]] / project_int_commands[worldFeat[1]])
+                    else:
+                        x = feat[1].replace('noOf', '').replace('TCI', '')
+                        x = ''.join(map(lambda x: x if x.islower() else " " + x, x))
+                        featureMapProps.setdefault('Project-level frequency ' + name, set()).add(
+                            ('Freq for each project ' + x, "F " + x))
+                        ratios.setdefault("F " + x, []).append(
+                            project_int_commands[feat[1]] / project_int_commands[worldFeat[1]])
+    return [ratios, featureMapProps]
+
+
+def get_timestamp_for_Commit(sha, commit_timestamp):
+    for x in commit_timeStamp:
+        if x[0] == sha:
+            return x[1]
+    return None
+
+
+cntr = 0
+for p in projects:
+    if p.totalCommits > 10000:
+        cntr += 1
+
 pathToTypeChanges = join(fileDir, 'TypeChangeMiner/Output/')
-latexCommandsInts = C({})
-latexCommandsFP = C({})
-typeChanges = C({})
-visibilityStats, transformationStats, elementKindStats, nameSpaceStats = {}, {}, {}, {}
-adaptationComplexity = {}
+all_int_commands = C({})
+all_float_commands = C({})
+all_ratios = {}
+all_featureCommandMap = {}
+all_typeChanges_TCI = C({})
+migration_candidates = C({})
+all_typeChanges_Project = C({})
 
-typeChangeExamples = []
+for p in projects:
 
+    repo = git.Repo("/Users/ameya/Research/TypeChangeStudy/Corpus/Project_" + p.name + "/" + p.name)
+    tree = repo.tree()
+    commit_timeStamp = list(
+        map(lambda c: (c.hexsha, time.asctime(time.gmtime(c.committed_date))), list(repo.iter_commits('HEAD'))))
+    # print(commit.message, time.asctime(time.gmtime(commit.committed_date)))
 
-def getMapping(tci):
-    mapping = []
-    for c in tci.codeMapping:
-        if not c.isSame:
-            mapping.append(Mapping(nameB4=tci.nameB4, nameAfter=tci.nameAfter, before=c.b4, after= c.after))
-    return mapping
-
-def getAdaptationComplexity(tca: TypeChangeAnalysis) -> float:
-    c = 0
-    tc = 0
-    for t in tca.typeChangeInstances:
-        tc += len(t.codeMapping)
-        c += sum(not c.isSame for c in t.codeMapping)
-    return 0.0 if tc == 0 else c / tc
-
-
-for p in projs:
+    project_typeChanges = C({})
+    project_typeChanges_migration_Candidates = {}
+    project_int_commands = C({})
+    project_float_commands = C({})
+    project_ratios = {}
+    project_featureCommandMap = {}
     typeChangeCommits = readAll("TypeChangeCommit_" + p.name, "TypeChangeCommit", protos=pathToTypeChanges)
-    if len(typeChangeCommits) > 0:
-        print(p.name + "   " + str(len(typeChangeCommits)))
-        for t in typeChangeCommits:
-            for tca in t.typeChanges:
-                noOfTypeChangeInstances = len(tca.typeChangeInstances)
-                # RQ1
-                latexCommandsInts += C({'noOfTypeChanges': 1})
-                typeChanges += C({TypeChange(before=pretty(tca.b4), after=pretty(tca.aftr)): 1})
-                for tci in tca.typeChangeInstances:
-                    # RQ1
-                    latexCommandsInts += C({'noOfTCIs': 1})
-                    # RQ3
-                    latexCommandsInts += C({'noOf' + tci.visibility + 'TCI': 1})
+    theWorld_project = readAll("TheWorld_" + p.name, "TheWorld", protos=pathToTypeChanges)
+    if len(theWorld_project) > 0:
+        project_featureCommandMap.setdefault('General', set()).add(('Total Projects Analyzed', 'corpusSize'))
+        project_int_commands += C({'corpusSize': 1})
+        if len(typeChangeCommits) > 0:
+            print(p.name + "   " + str(len(typeChangeCommits)))
+            for t in typeChangeCommits:
+                theWorld = theWorldContains(theWorld_project, t.sha)
+                if theWorld is not None:
 
-                    if tci.nameB4 != tci.nameAfter:
-                        latexCommandsInts += C({'noOfRenmeAndTCI': 1})
+                    timestamp_commit = get_timestamp_for_Commit(t.sha, commit_timeStamp)
+                    project_featureCommandMap.setdefault('General', set()).add(
+                        ('Total Commits Analyzed', 'noOfCommitsAnalyzed'))
+                    project_int_commands += C({'noOfCommitsAnalyzed': 1})
 
-                    # RQ3
-                    latexCommandsInts += C({'noOf' + tci.syntacticUpdate.transformation.replace(' ', ''): 1})
+                    analyzeTC = []
+                    for tc in t.typeChanges:
+                        if Pretty.pretty(tc.b4) != Pretty.pretty(tc.aftr):
+                            if tc.b4.root.isTypeVariable and tc.aftr.root.isTypeVariable:
+                                print("Remove TypeVar to Type Var from analysis")
+                            else:
+                                analyzeTC.append(tc)
 
-                    # RQ3 (Binary and Source Incompatibility)
-                    if tci.visibility == 'public':
-                        if tca.primitiveInfo.widening:
-                            latexCommandsInts += C({'noOfPublicWideningTCI': 1})
-                        if tci.elementKindAffected == ElementKind.Return and tca.hierarchyRelation == 'T_SUPER_R':
-                            latexCommandsInts += C({'noOfPublicRetTypeToSubTypeTCI': 1})
-                        if tci.elementKindAffected == ElementKind.Parameter and tca.hierarchyRelation == 'R_SUPER_T':
-                            latexCommandsInts += C({'noOfPublicRetTypeToSubTypeTCI': 1})
-                        if tci.elementKindAffected == ElementKind.Return and tca.primitiveInfo.narrowing:
-                            latexCommandsInts += C({'noOfPublicRetTypeNarrowTCI': 1})
-                        if tca.primitiveInfo.narrowing:
-                            latexCommandsInts += C({'noOfPublicNarrowTCI': 1})
-                        if tca.primitiveInfo.boxing or tca.primitiveInfo.unboxing:
-                            latexCommandsInts += C({'noOfPublicPrimitiveWrapUnwrapTCI': 1})
-                        if tca.primitiveInfo.widening and tci.elementKindAffected == ElementKind.Parameter:
-                            latexCommandsInts += C({'noOfPublicParamPrimitiveWideningTCI': 1})
-                        # RQ4 Namespace analysis
-                        latexCommandsInts += C({"noOf" + prettyNameSpace(tca.nameSpacesB4) + "To" + prettyNameSpace(
-                            tca.nameSpaceAfter): 1})
+                    int_commands, ratios_commit, featureMAp, typeChange_TCI = tca_tci_analysis(
+                        analyzeTC, theWorld)
 
-                # RQ4
-                if tca.hierarchyRelation != '':
-                    latexCommandsInts += C({'noOf' + tca.hierarchyRelation + 'TC': 1})
-                    # RQ5
-                    if tca.hierarchyRelation == "T_SUPER_R" or tca.hierarchyRelation == "R_SUPER_T":
-                        adaptationComplexity.setdefault("Parent Child", []).append(getAdaptationComplexity(tca))
-                    if tca.hierarchyRelation == "SIBLING":
-                        adaptationComplexity.setdefault("Sibling", []).append(getAdaptationComplexity(tca))
+                    project_int_commands += int_commands
+                    project_ratios = mergeDict(project_ratios, ratios_commit)
+                    project_featureCommandMap = mergeDictSet(project_featureCommandMap, featureMAp)
+                    project_typeChanges += typeChange_TCI
 
-                if tca.b4ComposesAfter:
-                    latexCommandsInts += C({'noOfCompositionTC': 1})
-                    adaptationComplexity.setdefault("Composition", []).append(getAdaptationComplexity(tca))
-                    mapping = []
-                    for tci in tca.typeChangeInstances:
-                            m = getMapping(tci)
-                            if len(m) > 0:
-                                mapping.append(m)
-                    if len(mapping) > 0:
-                        typeChangeExamples.append(TypeChangeExample(before=pretty(tca.b4), after=pretty(tca.aftr), mappings= mapping))
+                    for migration in t.migrationAnalysis:
+                        if 'Project' in migration.typeMigrationLevel:
+                            project_typeChanges_migration_Candidates.setdefault(migration.type, []).append(
+                                ('Project', timestamp_commit))
 
-                if tca.primitiveInfo.widening:
-                    latexCommandsInts += C({'noOfWideningTCI': len(tca.typeChangeInstances)})
-                if tca.primitiveInfo.narrowing:
-                    latexCommandsInts += C({'noOfNarrowingfTCI': len(tca.typeChangeInstances)})
-                if tca.primitiveInfo.boxing:
-                    latexCommandsInts += C({'noOfBoxingTCI': len(tca.typeChangeInstances)})
-                if tca.primitiveInfo.unboxing:
-                    latexCommandsInts += C({'noOfUnBoxingTCI': len(tca.typeChangeInstances)})
+                    for k, v in typeChange_TCI.items():
+                        for m, l in project_typeChanges_migration_Candidates.items():
+                            if m == k.before and 'Project' not in l[0]:
+                                project_typeChanges_migration_Candidates.setdefault(k.before, []).append(
+                                    (t.sha, timestamp_commit))
 
-                stats = tca.typeChangeStats
+            # Calculate project level proportions
 
-                # RQ3 (Visibility ratios)
-                for k, v in stats.visibilityStats.items():
-                    if v > 1.0:
-                        v = 1.0
-                    visibilityStats.setdefault(k, []).append(v)
-                # RQ3 (Syntactic update ratios)
-                for k, v in stats.transformationStats.items():
-                    if v > 1.0:
-                        v = 1.0
-                    transformationStats.setdefault(k, []).append(v)
-                # RQ1 (Element kind ratios)
-                for k, v in stats.elementKindStats.items():
-                    if v > 1.0:
-                        v = 1.0
-                    elementKindStats.setdefault(k, []).append(v)
-                # RQ4 (Namespace ratios)
-                for k, v in stats.nameSpaceStats.items():
-                    if v > 1.0:
-                        v = 1.0
-                    nameSpaceStats.setdefault(k, []).append(v)
+            for e in ['Element Visibility', 'Element Kind', 'Namespace Change', 'Syntactic Transformation Kind']:
+                prop_Ratios, feats = calculateProportions(project_featureCommandMap[e], e, project_int_commands, label=(
+                        e == 'Namespace Change' or e == 'Syntactic Transformation Kind'))
+                project_ratios = mergeDict(project_ratios, prop_Ratios)
+                project_featureCommandMap = mergeDictSet(project_featureCommandMap, feats)
 
-            # RQ5
-            for migration in t.migrationAnalysis:
-                latexCommandsInts += C({'noOf' + migration.typeMigrationLevel + ' Migrations': 1})
+                freq_Ratios, freq_feats = normalizeProjectLevel(project_featureCommandMap[e],
+                                                                project_featureCommandMap['TheWorld ' + e], e,
+                                                                project_int_commands, label=(
+                            e == 'Namespace Change' or e == 'Syntactic Transformation Kind'))
+                project_ratios = mergeDict(project_ratios, freq_Ratios)
+                project_featureCommandMap = mergeDictSet(project_featureCommandMap, freq_feats)
 
-# RQ4 (Hierarchy Analysis)
-latexCommandsInts += C({"noOfHierarchyTC": latexCommandsInts['noOfT_SUPER_RTC ']
-                                           + latexCommandsInts['noOfR_SUPER_TTC']
-                                           + latexCommandsInts['noOfSIBLINGTC']})
-latexCommandsFP += C(
-    {'PercentHierarchyTC': latexCommandsInts['noOfHierarchyTC'] / latexCommandsInts['noOfTypeChanges']})
-latexCommandsFP += C(
-    {'PercentCompositionTC': latexCommandsInts['noOfCompositionTC'] / latexCommandsInts['noOfTypeChanges']})
+        for k in project_typeChanges.keys():
+            all_typeChanges_Project.setdefault(k, set()).add(p.name)
 
-tcs = sorted(typeChanges.items(), reverse=True, key=lambda x: x[1])
+    project_typeChanges_migration_Candidates = dict(filter(lambda item: len(item[1]) > 1 or item[1][0][1] == 'Project',
+                                                           project_typeChanges_migration_Candidates.items()))
+
+    all_int_commands += project_int_commands
+    all_ratios = mergeDict(all_ratios, project_ratios)
+    all_featureCommandMap = mergeDictSet(all_featureCommandMap, project_featureCommandMap)
+    all_typeChanges_TCI += project_typeChanges
+    migration_candidates = mergeDict(migration_candidates, project_typeChanges_migration_Candidates)
+
+# print(stats.kruskal(pr.iloc[:,0],pck.iloc[:,0],c.iloc[:,0],s.iloc[:,0]))
+# f = posthocs.posthoc_dunn([pr.iloc[:,0],c.iloc[:,0],s.iloc[:,0],pck.iloc[:,0]])
+
+all_featureCommandMap.setdefault('General', set()).add(('Total Popular Type Changes', 'popularTypeChanges'))
+all_featureCommandMap.setdefault('General', set()).add(
+    ('Total number of instances for Popular Type Changes', 'noOfTypeChangesOfPopularTypeChanges'))
+for k, v in all_typeChanges_Project.items():
+    if len(v) > 1:
+        all_int_commands += C({'popularTypeChanges': 1})
+        all_int_commands += C({'noOfTypeChangesOfPopularTypeChanges': (all_typeChanges_TCI[k])})
+
+all_featureCommandMap.setdefault('General', set()).add(('Total Distinct Type Changes', 'totalDistinctTypeChanges'))
+all_int_commands += C({'totalDistinctTypeChanges': len(all_typeChanges_TCI.keys())})
+
+for key, value in all_featureCommandMap.items():
+    print('------------------------------')
+    print("For " + key)
+    print('------------------------------')
+    d = getSubDict1(all_int_commands, all_ratios, value)
+    if len(d) > 0:
+        latexCommandDFInt = pd.DataFrame.from_dict(dict(d), orient='index', columns=['Value'])
+    print(latexCommandDFInt.to_string())
+    print('==============================')
+
+for key, value in all_featureCommandMap.items():
+    x = []
+    if "Visibility" in key:
+        d = getSubDict(all_ratios, value)
+        if len(d) > 0:
+            if 'frequency' in key or 'Frequency' in key:
+                x.append([key, 'Frequency', d, True])
+            if 'proportion' in key or 'Proportion' in key:
+                x.append([key, 'Proportion', d, False])
+    for z in x:
+        cp.violin(z[2], xlabel=z[0], ylabel=z[1], isLog=z[3])
+
+for key, value in all_featureCommandMap.items():
+    x = []
+    if "Element Kind" in key:
+        d = getSubDict(all_ratios, value)
+        if len(d) > 0:
+            if 'frequency' in key or 'Frequency' in key:
+                x.append([key, 'Frequency', d, True])
+            if 'proportion' in key or 'Proportion' in key:
+                x.append([key, 'Proportion', d, False])
+    for z in x:
+        cp.violin(z[2], xlabel=z[0], ylabel=z[1], isLog=z[3])
 
 
-cp.violin(adaptationComplexity)
+def getExample(d, of):
+    if of in d.keys():
+        return d[of]
+    return "No Example"
 
-cp.violin(elementKindStats)
 
-cp.violin(visibilityStats)
+syntacticExamples = {
+    'Primitive-> Simple': '$\mathsf{\it{(int\:to\:UserId)}}$',
+    'Update Container': '$\mathsf{\it{(List<\!T\!>\:to\:Set<\!T\!>)}}$',
+    'Update Type Parameters': '$\mathsf{\it{(List<\!File\!>\:to\:List<\!Path\!>)}}$',
+    'Update Simple': '$\mathsf{\it{(String\:to\:URI)}}$',
+    'Update Primitive': '$\mathsf{\it{(int\:to\:long)}}$'
+}
 
-cp.violin(dict(filter(lambda x: 'DontKnow' not in x[0] and 'TypeVariable' not in x[0]
-                      , sorted(nameSpaceStats.items(), key=lambda item: len(item[1]), reverse=True))))
-cp.violin(transformationStats)
+x = []
+for key, value in all_featureCommandMap.items():
+    if "Syntactic" in key:
+        d = getSubDict(all_ratios, value)
+        if len(d) > 0:
+            if 'frequency' in key or 'Frequency' in key:
+                x.append([key, 'Frequency', d, True])
+            elif 'proportion' in key or 'Proportion' in key:
+                x.append([key, 'Proportion', d, False])
 
-latexCommandDFInt = pd.DataFrame.from_dict(dict(latexCommandsInts), orient='index', columns=['Value'])
-latexCommandDFFP = pd.DataFrame.from_dict(dict(latexCommandsFP), orient='index', columns=['Value'])
-print(latexCommandDFInt.to_string())
-print(latexCommandDFFP.to_string())
+proportionData = {}
+for z in x:
+    if 'Proportion' in z[1]:
+        m = dict(sorted(z[2].items(), key=lambda item: statistics.median(item[1]), reverse=True))
+        if len(z[2]) > 5:
+            m = dict(sorted(z[2].items(), key=lambda item: statistics.mean(item[1]), reverse=True)[:5])
+        z[2] = m
+        proportionData = z[2]
+
+frequencyMap = {}
+for z in x:
+    if 'Frequency' in z[1]:
+        for k1, v1 in proportionData.items():
+            frequencyMap[k1] = z[2][k1.replace('P ', 'F ')]
+        z[2] = dict(sorted(frequencyMap.items(), key=lambda item: statistics.median(item[1]), reverse=True))
+
+for z in x:
+    for k in list(z[2].keys()):
+        if 'Frequency' in z[1]:
+            z[2][k.replace("with", "->").replace('Replace ', '')] = z[2].pop(k)
+        else:
+            newKey = k.replace("with", "->").replace('Replace ', '')
+            z[2][newKey + "\n" + getExample(syntacticExamples, newKey.replace('P  ', '').replace('F  ', ''))] = z[
+                2].pop(k)
+    cp.violin(z[2], xlabel=z[0], ylabel=z[1], isLog=z[3])
+
+namespaceExamples = {
+    'Internal To Jdk': '$\mathsf{\it{org.apache.ignite.UuId}}$ -> \n$\mathsf{\it{java.io.File}}$',
+    'Jdk To Jdk': '$\mathsf{\it{java.util.List}}$ -> \n$\mathsf{\it{java.util.Set}}$',
+    'Internal To Internal': '$\mathsf{\it{org.apache.ignite.GridCache}}$ -> \n$\mathsf{\it{org.apache.ignite.IgniteCache}}$',
+    'External To External': '$\mathsf{\it{org.apache.common.logging.Log}}$ -> \n$\mathsf{\it{org.slf4j.Logger}}$',
+    'Jdk To Internal': '$\mathsf{\it{java.io.File}}$ -> \n$\mathsf{\it{org.geoserver.resource.Resource}}$'
+}
+
+x = []
+for key, value in all_featureCommandMap.items():
+    if "Namespace" in key:
+        d = getSubDict(all_ratios, value)
+        if len(d) > 0:
+            if 'frequency' in key or 'Frequency' in key:
+                x.append([key, 'Frequency', d, True])
+            elif 'proportion' in key or 'Proportion' in key:
+                x.append([key, 'Proportion', d, False])
+
+proportionData = {}
+for z in x:
+    if 'Proportion' in z[1]:
+        m = dict(sorted(z[2].items(), key=lambda item: statistics.median(item[1]), reverse=True))
+        if len(z[2]) > 5:
+            m = dict(sorted(z[2].items(), key=lambda item: statistics.mean(item[1]), reverse=True)[:5])
+        z[2] = m
+        proportionData = z[2]
+
+frequencyMap = {}
+for z in x:
+    if 'Frequency' in z[1]:
+        for k1, v1 in proportionData.items():
+            frequencyMap[k1] = z[2][k1.replace('P ', 'F ')]
+        z[2] = dict(sorted(frequencyMap.items(), key=lambda item: statistics.median(item[1]), reverse=True))
+
+for z in x:
+    for k in list(z[2].keys()):
+        if 'Frequency' in z[1]:
+            z[2][k.replace("with", "->").replace('Replace ', '')] = z[2].pop(k)
+            # cp.violin(z[2], xlabel=z[0], ylabel=z[1], isLog=z[3])
+        else:
+            newKey = k.replace("with", "->").replace('Replace ', '')
+            z[2][newKey + "\n" + getExample(namespaceExamples, newKey.replace('P  ', '').replace('F  ', ''))] = z[
+                2].pop(k)
+
+    cp.violin(z[2], xlabel=z[0], ylabel=z[1], isLog=z[3], height=3 if 'Frequency' in z[1] else 4)
+
+for key, value in all_featureCommandMap.items():
+    d = getSubDict(all_ratios, value)
+    if len(d) > 0:
+        print('------------------------------')
+        print("For " + key)
+        if 'Adaptation' in key:
+            cp.violin(d, key, 'Complexity', isVertical=True)

@@ -1,9 +1,12 @@
 from os.path import join as join
 from os.path import dirname as parent
 from os.path import realpath as realPath
+
+from TheWorld_pb2 import TheWorld
 from TypeChangeCommit_pb2 import TypeChangeCommit
 from Models.Models.CommitInfo_pb2 import CommitInfo
 from Models.Models.Project_pb2 import Project
+from Models.Models.ProcessedCodeMappings_pb2 import ProcessedCodeMappings
 
 
 def readFile(filename):
@@ -41,6 +44,10 @@ def readAll(fileName, kind, protos=pathToProtos):
                 c = Project()
             if kind == "TypeChangeCommit":
                 c = TypeChangeCommit()
+            if kind == "TheWorld":
+                c = TheWorld()
+            if kind == "ProcessedCodeMapping":
+                c = ProcessedCodeMappings()
             if c is not None:
                 c.ParseFromString(msg_buf)
                 l.append(c)

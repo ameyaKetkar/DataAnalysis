@@ -1,0 +1,63 @@
+<!-- #######  YAY, I AM THE SOURCE EDITOR! #########-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <!-- Basic Page Needs
+    ================================================== -->
+    <meta charset="utf-8">
+    <title>TypeChanges-Projects</title>
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <!-- Mobile Specific Metas
+    ================================================== -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" type="text/css" href="mystyle1.css">
+
+</head>
+<body style="font-size: 144%;">
+
+<h1 style="color: #5e9ca0;">{{TypeChange}}</h1>
+<p>&nbsp;</p>
+<h2 style="color: #2e6c80;"><span style="color: #000000;">No. of Instances - {{noOfInst}}</span>:</h2>
+<h2 style="color: #2e6c80;"><span style="color: #000000;">No. of Commits - {{noOfCommits}}</span>:</h2>
+<h2 style="color: #2e6c80;"><span style="color: #000000;">No. of Projects - {{noOfProjects}}</span>:</h2>
+
+<h2>Hierarchy/Composition: {{hierarchy}}</h2>
+<h2>Primitive Info: {{primitiveInfo}}</h2>
+<h2>NameSpace: {{namespace}}</h2>
+<h2>Mapping:</h2>
+
+<ol>
+    {% for mapping in mappings %}
+    <li> <a href="#" onclick="toggle_visibility('{{mapping.name}}');">+</a>
+        {{mapping.name}}</li>
+    <ul id = "{{mapping.name}}", style="display: none;">
+        {% for inst in mapping.instances %}
+        <li><a href="{{inst.urlB4}}">{{inst.frm}}</a> to <a href="{{inst.urlAftr}}">{{inst.to}}</a></li>
+        {% endfor %}
+    </ul>
+    {% endfor %}
+</ol>
+
+<ul>
+    {% for x in instances %}
+    <li><a href="{{x.url}}">{{x.transformation}}</a></li>
+    {% endfor %}
+</ul>
+
+</body>
+
+<script type="text/javascript">
+    <!--
+    function toggle_visibility(id) {
+        var e = document.getElementById(id);
+        if(e.style.display == 'block')
+            e.style.display = 'none';
+        else
+            e.style.display = 'block';
+    }
+    //-->
+</script>

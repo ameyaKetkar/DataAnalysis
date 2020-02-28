@@ -1,5 +1,5 @@
-from CommitInfo_pb2 import CommitInfo
-import Project_pb2 as p
+from OldModels.CommitInfo_pb2 import CommitInfo
+import OldModels.Project_pb2 as p
 import os
 from google.protobuf.internal.decoder import _DecodeVarint32
 
