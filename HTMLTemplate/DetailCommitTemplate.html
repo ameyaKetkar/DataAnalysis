@@ -110,8 +110,8 @@
     <div class="container">
             <div class="row">
                 <div class="col-md-12 heading">
-                    <h2 class="title classic">Third party dependencies:</h2>
-                    <ul>
+                    <h2 class="title classic"><a href="#" onclick="toggle_visibility('deps');"><i class="fa fa-plus" aria-hidden="true">Third party dependencies:</i></a></h2>
+                    <ul id = "deps", style="display: none;">
                         {% for dep in dependencies %}
                         <li>{{dep.name}}</li>
                         {% endfor %}
@@ -126,10 +126,10 @@
                         <tbody>
                         <tr class="clickable" data-toggle="collapse" data-target="#group-of-rows-{{Addednum}}" aria-expanded="false" aria-controls="group-of-rows-1">
                             <td>Added</td>
-                            <td><i class="fa fa-plus" aria-hidden="true"></i></td>
+                            <td><a href="#" onclick="toggle_visibility('Added');"><i class="fa fa-plus" aria-hidden="true"></i></a></td>
                         </tr>
                         </tbody>
-                        <tbody id="group-of-rows-{{Addednum}}" class="collapse">
+                        <tbody id = "Added", style="display: none;">
                         {% for a in Added %}
                         <tr>
                             <td></td>
@@ -143,10 +143,10 @@
                         <tbody>
                         <tr class="clickable" data-toggle="collapse" data-target="#group-of-rows-{{RemovedNum}}" aria-expanded="false" aria-controls="group-of-rows-1">
                             <td>Removed</td>
-                            <td><i class="fa fa-plus" aria-hidden="true"></i></td>
+                            <td><a href="#" onclick="toggle_visibility('Removed');"><i class="fa fa-plus" aria-hidden="true"></i></a></td>
                         </tr>
                         </tbody>
-                        <tbody id="group-of-rows-{{RemovedNum}}" class="collapse">
+                        <tbody id = "Removed", style="display: none;">
                         {% for a in Removed %}
                         <tr>
                             <td></td>
@@ -159,11 +159,11 @@
                         {% if Updated %}
                         <tbody>
                         <tr class="clickable" data-toggle="collapse" data-target="#group-of-rows-{{UpdatedNum}}" aria-expanded="false" aria-controls="group-of-rows-1">
-                            <td><i class="fa fa-plus" aria-hidden="true"></i></td>
                             <td>Updated</td>
+                            <td><a href="#" onclick="toggle_visibility('Updated');"><i class="fa fa-plus" aria-hidden="true"></i></a></td>
                         </tr>
                         </tbody>
-                        <tbody id="group-of-rows-{{UpdatedNum}}" class="collapse">
+                        <tbody id = "Updated", style="display: none;">
                         {% for a in Updated %}
                         <tr>
                             <td></td>
@@ -192,12 +192,13 @@
                             {% for r in refactorings %}
                             <tbody>
                             <tr class="clickable" data-toggle="collapse" data-target="#group-of-rows-{{r.num}}" aria-expanded="true" aria-controls="group-of-rows-1">
-                                <td><i class="fa fa-plus" aria-hidden="false"></i></td>
+                                <td><a href="#" onclick="toggle_visibility('{{r.name}}');">
+                                    <i class="fa fa-plus" aria-hidden="false"></i></a></td>
                                 <td>{{r.name}}</td>
                                 <td>{{r.occurence}}</td>
                             </tr>
                             </tbody>
-                            <tbody id="group-of-rows-{{r.num}}" class="collapse">
+                            <tbody id = "{{r.name}}", style="display: none;">
                             {% for x in r.descriptions %}
                             <tr>
                                 <td></td>
@@ -250,4 +251,17 @@
     <script type="text/javascript" src="../../js/custom.js"></script>
 </div><!-- Body inner end -->
 </body>
+
+<script type="text/javascript">
+    <!--
+    function toggle_visibility(id) {
+        var e = document.getElementById(id);
+        if(e.style.display == 'block')
+            e.style.display = 'none';
+        else
+            e.style.display = 'block';
+    }
+    //-->
+</script>
+
 </html>

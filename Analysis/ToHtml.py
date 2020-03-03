@@ -1,20 +1,29 @@
 import shutil
 import html
-import OldModels.OldRW as OldRW
+# import OldModels.OldRW as OldRW
 from jinja2 import Environment, FileSystemLoader
 import os
+from collections import Counter as C
+from Analysis.RW import readAll
+from collections import namedtuple as nt
+from PrettyPrint import pretty, prettyNameSpace1
+
+TypeChange = nt('TypeChange', ['before', 'after'])
 
 pathToPages = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath('__file__'))), "docs/Pages")
 pathToProjectsHtml = os.path.join(pathToPages, "projects.html")
 pathToIndexFile = os.path.join(os.path.dirname(pathToPages), "index.html")
 
 env = Environment(loader=FileSystemLoader(os.path.dirname(os.path.dirname(os.path.realpath('__file__')))))
-template = env.get_template("HTMLTemplate/ProjectTemplate.html")
+projectTemplate = env.get_template("HTMLTemplate/ProjectTemplate.html")
 commitTemplate = env.get_template("HTMLTemplate/CommitSummaryTemplate.html")
 detailedCommitTemplate = env.get_template("HTMLTemplate/DetailCommitTemplate.html")
 indexTemplate = env.get_template("HTMLTemplate/IndexTemplate.html")
 
-projects = OldRW.readProject('Projects')
+TypeChangeSummarytemplate = env.get_template("HTMLTemplate/TypeChangeSummaryTemplate.html")
+templateTCI = env.get_template("HTMLTemplate/TypeChangeInstances.html")
+
+projects = readAll('Projects', 'Project')
 items = []
 
 if os.path.isdir(pathToPages):
@@ -28,7 +37,7 @@ noOfProjects, noOfCommits, noOfRefactorings, noOfTypeChanges, noOfCommitsExcepti
 
 for p in projects:
     noOfProjects += 1
-    commits = OldRW.readCommit('commits_' + p.name)
+    commits = readAll('commits_' + p.name, 'Commit')
     l = str(len(commits))
     d = dict(name=p.name, Url=p.url, totalCommits=p.totalCommits, CommitsAnalyzed=l,
              LinkToCommits=p.name + ".html")
@@ -114,7 +123,7 @@ for p in projects:
         fh.close()
 
 with open(pathToProjectsHtml, 'a') as fh:
-    fh.write(template.render(projects=items))
+    fh.write(projectTemplate.render(projects=items))
     fh.write('\n')
     fh.close()
 
@@ -124,3 +133,132 @@ with open(pathToIndexFile, 'w+') as f:
                                  NumberOfExceptionCommits=noOfCommitsException))
     f.write('\n')
     f.close()
+
+pathToPages = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath('__file__'))), "docs/Pages/AllTCA/")
+os.mkdir(pathToPages)
+
+typeChanges = {}
+typeChanges_commit = {}
+typeChange_project = {}
+typeChange_hierarchy = {}
+typeChange_nameSpace = {}
+typeChange_primitiveInfo = {}
+pop_typeChange_nameSpace = C({})
+
+processedCodeMapping = readAll("ProcessedCodeMapping", "ProcessedCodeMapping",
+                               protos="/Users/ameya/Research/TypeChangeStudy/TypeChangeMiner/Output/CodeMapping/")
+
+x = set()
+for pc in processedCodeMapping:
+    if len(pc.relevantStmts) > 0:
+        for rs in pc.relevantStmts:
+            if len(rs.mapping) > 0:
+                for em in rs.mapping:
+                    x.add(em.replacement)
+
+print(x)
+
+
+def getStatementMapping(typechange):
+    for p in processedCodeMapping:
+        if pretty(p.b4) == typechange.before and pretty(p.aftr) == typechange.after:
+            return p.relevantStmts
+
+    return []
+
+
+for p in projects:
+    typeChangeCommits = readAll("TypeChangeCommit_" + p.name, "TypeChangeCommit",
+                                protos="/Users/ameya/Research/TypeChangeStudy/TypeChangeMiner/Output/")
+
+    commitSummary = []
+    for cmt in typeChangeCommits:
+        for tca in cmt.typeChanges:
+            if not tca.b4.root.isTypeVariable and not tca.aftr.root.isTypeVariable:
+                zzz = TypeChange(before=pretty(tca.b4), after=pretty(tca.aftr))
+                if zzz.before == "":
+                    print()
+                typeChanges.setdefault(zzz, []).extend(tca.typeChangeInstances)
+                typeChanges_commit.setdefault(zzz, set()).add(cmt.sha)
+                typeChange_project.setdefault(zzz, set()).add(p.name)
+                if tca.hierarchyRelation != '' and "NO" not in tca.hierarchyRelation:
+                    typeChange_hierarchy[zzz] = tca.hierarchyRelation
+                elif tca.b4ComposesAfter:
+                    typeChange_hierarchy[zzz] = "Composition"
+                elif tca.primitiveInfo is not None:
+                    if tca.primitiveInfo.boxing:
+                        typeChange_primitiveInfo[zzz] = "Boxing"
+                    elif tca.primitiveInfo.unboxing:
+                        typeChange_primitiveInfo[zzz] = "Unboxing"
+                    elif tca.primitiveInfo.narrowing:
+                        typeChange_primitiveInfo[zzz] = "Narrowing"
+                    elif tca.primitiveInfo.widening:
+                        typeChange_primitiveInfo[zzz] = "Widening"
+                typeChange_nameSpace[zzz] = prettyNameSpace1(tca.nameSpacesB4) + " -> " + prettyNameSpace1(
+                    tca.nameSpaceAfter)
+
+typeChangeSummary = []
+
+renameTypeChange = {}
+
+
+
+tciCounter = 0
+for k, v in typeChanges.items():
+    if len(typeChange_project[k]) > 1:
+        f = dict(TypeChange=html.escape(k.before + " to " + k.after),
+                 hierarchy=typeChange_hierarchy[k] if k in typeChange_hierarchy.keys() else "-",
+                 primitiveInfo=typeChange_primitiveInfo[k] if k in typeChange_primitiveInfo.keys() else "-",
+                 namespace=typeChange_nameSpace[k] if k in typeChange_nameSpace.keys() else "-")
+
+        mapping = getStatementMapping(k)
+
+        minedReplacements = {}
+
+        for m in mapping:
+            for em in m.mapping:
+                minedReplacements.setdefault(em.replacement, []).append(
+                    dict(frm=html.escape(em.b4 if em.b4 else m.b4), to=html.escape(em.aftr if em.aftr else m.after),
+                         urlB4=m.urlbB4,
+                         urlAftr=m.urlAftr, stmtB4=m.b4, strmtAftr=m.after))
+        mappings = []
+
+        if typeChange_nameSpace[k] == 'Jdk -> Jdk':
+            pop_typeChange_nameSpace += C({'Jdk -> Jdk': 1})
+        elif 'Internal' in typeChange_nameSpace[k]:
+            pop_typeChange_nameSpace += C({'InvolvesInternal': 1})
+        elif 'External' in typeChange_nameSpace[k]:
+            pop_typeChange_nameSpace += C({'InvolvesExternal': 1})
+
+        for key, val in minedReplacements.items():
+            mappings.append(dict(name=key.replace("\\percent", ""), instances=val))
+
+        pathToProjectTCI = os.path.join(pathToPages, "tci" + str(tciCounter) + ".html")
+        with open(pathToProjectTCI, 'a') as fh:
+            fh.write(templateTCI.render(mappings=mappings, TypeChange=html.escape(k.before + " to " + k.after),
+                                        hierarchy=typeChange_hierarchy[k] if k in typeChange_hierarchy.keys() else "-",
+                                        primitiveInfo=typeChange_primitiveInfo[
+                                            k] if k in typeChange_primitiveInfo.keys() else "-",
+                                        namespace=typeChange_nameSpace[k] if k in typeChange_nameSpace.keys() else "-",
+                                        noOfInst=len(v), noOfCommits=len(typeChanges_commit[k]),
+                                        noOfProjects=str(typeChange_project[k])))
+            fh.write('\n')
+            fh.close()
+        tciCounter += 1
+
+        typeChangeSummary.append(
+            dict(b4=html.escape(k.before), after=html.escape(k.after), tcisLink=pathToProjectTCI, noOfTCI=len(v),
+                 noOfCommits=len(typeChanges_commit[k]),
+                 noOfProjects=len(typeChange_project[k]),
+                 hierarchy=typeChange_hierarchy[k] if k in typeChange_hierarchy.keys() else "-",
+                 primitiveInfo=typeChange_primitiveInfo[
+                     k] if k in typeChange_primitiveInfo.keys() else "-",
+                 namespace=typeChange_nameSpace[k] if k in typeChange_nameSpace.keys() else "-"))
+
+typeChangeSummary = sorted(typeChangeSummary, key=lambda i: (i['noOfTCI']), reverse=True)
+
+pathToProjectCommits = os.path.join(pathToPages, "TypeChangeSummary.html")
+with open(pathToProjectCommits, 'a') as fh:
+    fh.write(TypeChangeSummarytemplate.render(typeChangeAnalysisList=typeChangeSummary))
+    fh.write('\n')
+    fh.close()

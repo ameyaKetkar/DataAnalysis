@@ -52,7 +52,7 @@ def do_stats_stuff(m):
     return s
 
 
-def violin(m, xlabel, ylabel, isVertical=False, isLog=False, height=3, legend=True):
+def violin(m, xlabel, ylabel, isVertical=False, isLog=False, height=3, legend=True, legendDontOVerlap=False):
     # rc('text', usetex=True)
 
     xlabel = xlabel.replace("Project-level frequency ", "")
@@ -88,7 +88,11 @@ def violin(m, xlabel, ylabel, isVertical=False, isLog=False, height=3, legend=Tr
     # adjust_text(texts)
 
     if legend:
-        plt.legend([red_patch, blue_patch], ['Mean', 'Median'])
+        if legendDontOVerlap:
+            plt.legend([red_patch, blue_patch], ['Mean', 'Median'],bbox_to_anchor=(1,0.5), loc="center right",
+                   bbox_transform=plt.gcf().transFigure)
+        else:
+            plt.legend([red_patch, blue_patch], ['Mean', 'Median'])
 
     if isLog:
         axes.set(xscale="log")

@@ -8,7 +8,7 @@ from Analysis.RW import readAll
 from PrettyPrint import pretty, prettyNameSpace1
 from Analysis.CreatePlots import violin
 
-pathToPages = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath('__file__'))), "docs/Pages")
+pathToPages = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath('__file__'))), "docs/PagesAllTCA")
 pathToProjectsHtml = os.path.join(pathToPages, "projects.html")
 pathToIndexFile = os.path.join(os.path.dirname(pathToPages), "index.html")
 

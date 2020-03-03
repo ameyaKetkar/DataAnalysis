@@ -7,6 +7,7 @@ from TypeChangeCommit_pb2 import TypeChangeCommit
 from Models.Models.CommitInfo_pb2 import CommitInfo
 from Models.Models.Project_pb2 import Project
 from Models.Models.ProcessedCodeMappings_pb2 import ProcessedCodeMappings
+from Models.Models.MigrationData_pb2 import MigrationData
 
 
 def readFile(filename):
@@ -48,6 +49,8 @@ def readAll(fileName, kind, protos=pathToProtos):
                 c = TheWorld()
             if kind == "ProcessedCodeMapping":
                 c = ProcessedCodeMappings()
+            if kind == "Migration":
+                c = MigrationData()
             if c is not None:
                 c.ParseFromString(msg_buf)
                 l.append(c)

@@ -15,39 +15,6 @@ from Analysis.AnalysisFns import tca_tci_analysis, theWorldContains, mergeDict, 
 from Analysis.RW import readAll
 import re
 
-f = open('/Users/ameya/Research/TypeChangeStudy/migrations.csv')
-lines = f.readlines()
-f.close()
-res = []
-for ls in lines:
-    if ls.count('.') > 1:
-        zs = [ls[i:i+4] for i in range(0, len(ls), 4)]
-        for xx in zs:
-            yy = xx.replace('\n', '')
-            if len(yy) >0 :
-                f1 = float(yy)
-                if(f1 < 1.0):
-                    res.append(f1)
-
-    else:
-        z = ls.replace('\n', '')
-        f2 = float(z)
-        if f2 < 1.0:
-            res.append(f2)
-
-
-for r in res:
-    if r > 100:
-        print(r)
-
-migrationMionerMap = {}
-migrationMionerMap.setdefault('',res)
-
-
-cp.violin(migrationMionerMap, xlabel="Migration", ylabel="Ratio", isLog=False, height=3 )
-
-
-
 fileDir = parent(parent(parent(realpath('__file__'))))
 pathToTypeChanges = join(fileDir, 'TypeChangeMiner/Output/')
 
@@ -60,14 +27,49 @@ projects = list(filter(
     lambda x: 'jfreechart' not in x.name and '99' not in x.name and 'comma' not in x.name and 'binnavi' not in x.name,
     projects))
 
+migrationMap = {}
+popularMigrationMapJdk = {}
+popularMigrationMapInternal = {}
+popularMigrationMapExternal = {}
+pathToMigrationProtos = join(pathToTypeChanges, 'Migration')
+for p in projects:
+    migrations = readAll('Migration_'+p.name, 'Migration', protos= pathToMigrationProtos)
+    for m in migrations:
+        ns = Pretty.prettyNameSpace1(m.namespace)
+        if 'TypeVariable' not in ns:
+            migrationMap.setdefault(ns,[]).append(m.ratio)
+            if m.ratio == 1.0:
+                if "Jdk" in ns:
+                    popularMigrationMapJdk.setdefault(Pretty.pretty(m.type),[]).append(m)
+                if "External" in ns:
+                    popularMigrationMapExternal.setdefault(Pretty.pretty(m.type),[]).append(m)
+                if "Internal" in ns:
+                    popularMigrationMapInternal.setdefault(Pretty.pretty(m.type),[]).append(m)
 
-#
-# theWorld = C({})
-# typeChangeCommits = C({})
-# for p in projects:
-#     theWorld += C({'TheWorld': len(readAll("TheWorld_" + p.name, "TheWorld", pathToTypeChanges))})
-#     typeChangeCommits += C({"Commits": len(readAll("TypeChangeCommit_" + p.name, "TypeChangeCommit", protos=pathToTypeChanges))})
+for t, g in migrationMap.items():
+    print(t)
+    print(statistics.median(g))
 
+popularMigrationMapJdk = dict(sorted(popularMigrationMapJdk.items(), key=lambda x: len(x[1]), reverse=True))
+popularMigrationMapInternal = dict(sorted(popularMigrationMapInternal.items(), key=lambda x: len(x[1]), reverse=True))
+popularMigrationMapExternal = dict(sorted(popularMigrationMapExternal.items(), key=lambda x: len(x[1]), reverse=True))
+
+
+
+for ns, ratios in migrationMap.items():
+    migrationsDetected = sum(x == 1.0 for x in ratios)
+    print("FrequencyMigration"+ns +"  " + str(migrationsDetected/len(ratios)))
+
+cp.violin(migrationMap, xlabel="Migration", ylabel="Ratio", isLog=False, height=3 , legendDontOVerlap=True)
+
+migrationsDetected = 0
+totalCandidate = 0
+for ns, ratios in migrationMap.items():
+    migrationsDetected += sum(x == 1.0 for x in ratios)
+    totalCandidate += len(ratios)
+    # print("FrequencyMigration"+ns +"  " + str(migrationsDetected/len(ratios)))
+
+print(migrationsDetected/totalCandidate)
 
 def getSubDict1(fromDict: dict, orFromDict: dict, forKeys) -> dict:
     d = {}
@@ -278,6 +280,10 @@ for key, value in all_featureCommandMap.items():
             if 'proportion' in key or 'Proportion' in key:
                 x.append([key, 'Proportion', d, False])
     for z in x:
+        if "P Block" in z[2].keys():
+            del z[2]["P Block"]
+        if "F Block" in z[2].keys():
+            del z[2]["F Block"]
         cp.violin(z[2], xlabel=z[0], ylabel=z[1], isLog=z[3])
 
 for key, value in all_featureCommandMap.items():
@@ -395,4 +401,4 @@ for key, value in all_featureCommandMap.items():
         print('------------------------------')
         print("For " + key)
         if 'Adaptation' in key:
-            cp.violin(d, key, 'Complexity', isVertical=True)
+            cp.violin(d, key, 'Complexity', isVertical=True, legendDontOVerlap=True)
