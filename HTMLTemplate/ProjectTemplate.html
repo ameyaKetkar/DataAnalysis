@@ -97,6 +97,7 @@
                     <th scope="col">URL</th>
                     <th scope="col">Total Commits</th>
                     <th scope="col">Commits analyzed</th>
+                    <th scope="col">Type Changes</th>
                 </tr>
                 </thead>
                 {% for p in projects %}
@@ -105,6 +106,7 @@
                     <td>{{p.Url}}</td>
                     <td>{{p.totalCommits}}</td>
                     <td><a href="{{p.LinkToCommits}}">{{p.CommitsAnalyzed}}</a></td>
+                    <td><a href="{{p.LinkToTypeChanges}}">{{p.totalTypeChanges}}</a></td>
                 </tr>
                 {% endfor %}
             </table>

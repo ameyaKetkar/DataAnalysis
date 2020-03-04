@@ -23,6 +23,18 @@ TypeChangeExample = nt('TypeChangeExample', ['before', 'after', 'mappings'])
 
 projects = readAll("Projects", "Project")  # [:10]
 
+pathToVerificationProtos = join(pathToTypeChanges, 'Verification')
+verificationData = []
+for vp in ['guava', 'error-prone', 'java-parser', 'CoreNLP']:
+    verificationData.extend(readAll('Verification_'+vp, 'Verification', protos=pathToVerificationProtos))
+
+
+matched = 0
+matched = sum(vd.matched for vd in verificationData)
+
+print('TFMiner precision = ' , matched/len(verificationData))
+
+
 projects = list(filter(
     lambda x: 'jfreechart' not in x.name and '99' not in x.name and 'comma' not in x.name and 'binnavi' not in x.name,
     projects))
@@ -53,6 +65,10 @@ for t, g in migrationMap.items():
 popularMigrationMapJdk = dict(sorted(popularMigrationMapJdk.items(), key=lambda x: len(x[1]), reverse=True))
 popularMigrationMapInternal = dict(sorted(popularMigrationMapInternal.items(), key=lambda x: len(x[1]), reverse=True))
 popularMigrationMapExternal = dict(sorted(popularMigrationMapExternal.items(), key=lambda x: len(x[1]), reverse=True))
+
+
+
+
 
 
 

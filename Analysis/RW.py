@@ -8,6 +8,7 @@ from Models.Models.CommitInfo_pb2 import CommitInfo
 from Models.Models.Project_pb2 import Project
 from Models.Models.ProcessedCodeMappings_pb2 import ProcessedCodeMappings
 from Models.Models.MigrationData_pb2 import MigrationData
+from Verification_pb2 import Verification
 
 
 def readFile(filename):
@@ -51,6 +52,8 @@ def readAll(fileName, kind, protos=pathToProtos):
                 c = ProcessedCodeMappings()
             if kind == "Migration":
                 c = MigrationData()
+            if kind == "Verification":
+                c = Verification()
             if c is not None:
                 c.ParseFromString(msg_buf)
                 l.append(c)
