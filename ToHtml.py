@@ -16,8 +16,8 @@ TypeChange = nt('TypeChange', ['before', 'after'])
 
 
 
-fileDir = parent(parent(parent(realpath('__file__'))))
-pathToTypeChangeMinerOutput = join(fileDir, 'TypeChangeMiner/Output/')
+fileDir = parent(((realpath('__file__'))))
+pathToTypeChangeMinerOutput = join(parent(fileDir), 'TypeChangeMiner/Output/')
 
 
 processedCodeMapping = readAll("ProcessedCodeMapping", "ProcessedCodeMapping",
@@ -37,11 +37,11 @@ def getStatementMapping(typechange):
     return []
 
 
-pathToPages = os.path.join(os.path.dirname((os.path.realpath('__file__'))), "docs/P")
+pathToPages = os.path.join(fileDir, "docs/P")
 pathToProjectsHtml = os.path.join(pathToPages, "projects.html")
 pathToIndexFile = os.path.join(os.path.dirname(pathToPages), "index.html")
 
-env = Environment(loader=FileSystemLoader(os.path.dirname(os.path.dirname('__file__'))))
+env = Environment(loader=FileSystemLoader(fileDir))
 projectTemplate = env.get_template("HTMLTemplate/ProjectTemplate.html")
 commitTemplate = env.get_template("HTMLTemplate/CommitSummaryTemplate.html")
 detailedCommitTemplate = env.get_template("HTMLTemplate/DetailCommitTemplate.html")
@@ -267,7 +267,7 @@ items = []
 ############################################################################################################################
 
 
-pathToPages = os.path.join(os.path.dirname((os.path.realpath('__file__'))), "docs/P/A/")
+pathToPages = os.path.join(fileDir, "docs/P/A/")
 try:
     os.mkdir(pathToPages)
 except OSError:
