@@ -15,6 +15,9 @@ from Analysis.AnalysisFns import tca_tci_analysis, theWorldContains, mergeDict, 
 from Analysis.RW import readAll
 import re
 
+
+
+
 fileDir = parent(parent(parent(realpath('__file__'))))
 pathToTypeChanges = join(fileDir, 'TypeChangeMiner/Output/')
 
@@ -29,6 +32,10 @@ for vp in ['guava', 'error-prone', 'java-parser', 'CoreNLP']:
     verificationData.extend(readAll('Verification_'+vp, 'Verification', protos=pathToVerificationProtos))
 
 
+
+
+
+
 matched = 0
 matched = sum(vd.matched for vd in verificationData)
 
@@ -39,10 +46,24 @@ projects = list(filter(
     lambda x: 'jfreechart' not in x.name and '99' not in x.name and 'comma' not in x.name and 'binnavi' not in x.name,
     projects))
 
+pr_cmt={}
+for pr in projects:
+    typeChangeCommits = readAll("TypeChangeCommit_" + pr.name, "TypeChangeCommit", protos=pathToTypeChanges)
+    for tc in typeChangeCommits:
+        pr_cmt.setdefault(pr.name,[]).append(tc.sha)
+
+def findCommit(sha):
+    for prj,cmt in pr_cmt.items():
+        if sha in cmt:
+            return prj
+    return None
+
+
 migrationMap = {}
 popularMigrationMapJdk = {}
 popularMigrationMapInternal = {}
 popularMigrationMapExternal = {}
+
 pathToMigrationProtos = join(pathToTypeChanges, 'Migration')
 for p in projects:
     migrations = readAll('Migration_'+p.name, 'Migration', protos= pathToMigrationProtos)
@@ -52,11 +73,14 @@ for p in projects:
             migrationMap.setdefault(ns,[]).append(m.ratio)
             if m.ratio == 1.0:
                 if "Jdk" in ns:
-                    popularMigrationMapJdk.setdefault(Pretty.pretty(m.type),[]).append(m)
+                    #popularMigrationMapJdk.setdefault(Pretty.pretty(m.type),[]).append(m)
+                    popularMigrationMapJdk.setdefault(Pretty.pretty(m.type),[]).extend(list(dict.fromkeys(list(map(lambda x: findCommit(x.sha), m.commitToType)))))
                 if "External" in ns:
-                    popularMigrationMapExternal.setdefault(Pretty.pretty(m.type),[]).append(m)
+                    popularMigrationMapExternal.setdefault(Pretty.pretty(m.type),[]).extend(list(dict.fromkeys(list(map(lambda x: findCommit(x.sha), m.commitToType)))))
+                    # popularMigrationMapExternal.setdefault(Pretty.pretty(m.type),[]).append(m)
                 if "Internal" in ns:
-                    popularMigrationMapInternal.setdefault(Pretty.pretty(m.type),[]).append(m)
+                    popularMigrationMapInternal.setdefault(Pretty.pretty(m.type),[]).extend(list(dict.fromkeys(list(map(lambda x: findCommit(x.sha), m.commitToType)))))
+                    # popularMigrationMapInternal.setdefault(Pretty.pretty(m.type),[]).append(m)
 
 for t, g in migrationMap.items():
     print(t)
@@ -65,12 +89,6 @@ for t, g in migrationMap.items():
 popularMigrationMapJdk = dict(sorted(popularMigrationMapJdk.items(), key=lambda x: len(x[1]), reverse=True))
 popularMigrationMapInternal = dict(sorted(popularMigrationMapInternal.items(), key=lambda x: len(x[1]), reverse=True))
 popularMigrationMapExternal = dict(sorted(popularMigrationMapExternal.items(), key=lambda x: len(x[1]), reverse=True))
-
-
-
-
-
-
 
 for ns, ratios in migrationMap.items():
     migrationsDetected = sum(x == 1.0 for x in ratios)

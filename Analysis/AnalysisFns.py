@@ -141,19 +141,23 @@ def tca_tci_analysis(tcas: TypeChangeAnalysis, theWorld: TheWorld) -> [C, dict, 
             int_commands += C({'noOfRenameAndTCI': 1 if tci.nameB4 != tci.nameAfter else 0})
 
             if prettyElementKind(tci.elementKindAffected) == "Field":
-                featuresToCommandMap.setdefault('General', set()).add(('Total TCIs with Renames Fields', 'noOfRenameAndTCIField'))
+                featuresToCommandMap.setdefault('General', set()).add(
+                    ('Total TCIs with Renames Fields', 'noOfRenameAndTCIField'))
                 int_commands += C({'noOfRenameAndTCIField': 1 if tci.nameB4 != tci.nameAfter else 0})
 
             if prettyElementKind(tci.elementKindAffected) == "LocalVariable":
-                featuresToCommandMap.setdefault('General', set()).add(('Total TCIs with Renames LocalVariables', 'noOfRenameAndTCILocalVariable'))
+                featuresToCommandMap.setdefault('General', set()).add(
+                    ('Total TCIs with Renames LocalVariables', 'noOfRenameAndTCILocalVariable'))
                 int_commands += C({'noOfRenameAndTCILocalVariable': 1 if tci.nameB4 != tci.nameAfter else 0})
 
             if prettyElementKind(tci.elementKindAffected) == "Return":
-                featuresToCommandMap.setdefault('General', set()).add(('Total TCIs with Renames Returns', 'noOfRenameAndTCIReturn'))
+                featuresToCommandMap.setdefault('General', set()).add(
+                    ('Total TCIs with Renames Returns', 'noOfRenameAndTCIReturn'))
                 int_commands += C({'noOfRenameAndTCIReturn': 1 if tci.nameB4 != tci.nameAfter else 0})
 
             if prettyElementKind(tci.elementKindAffected) == "Parameter":
-                featuresToCommandMap.setdefault('General', set()).add(('Total TCIs with Renames Parameters', 'noOfRenameAndTCIParameter'))
+                featuresToCommandMap.setdefault('General', set()).add(
+                    ('Total TCIs with Renames Parameters', 'noOfRenameAndTCIParameter'))
                 int_commands += C({'noOfRenameAndTCIParameter': 1 if tci.nameB4 != tci.nameAfter else 0})
 
             # RQ3 (Binary and Source Incompatibility)
@@ -229,3 +233,5 @@ def mergeDictSet(d1: dict, d2: dict) -> dict:
         else:
             d1[key] = value
     return d1
+
+

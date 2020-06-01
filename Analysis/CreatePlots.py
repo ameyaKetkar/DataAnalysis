@@ -52,7 +52,7 @@ def do_stats_stuff(m):
     return s
 
 
-def violin(m, xlabel, ylabel, isVertical=False, isLog=False, height=3, legend=True, legendDontOVerlap=False):
+def violin(m, xlabel, ylabel, isVertical=False, isLog=False, height=3, width=9, legend=True, legendDontOVerlap=False):
     # rc('text', usetex=True)
 
     xlabel = xlabel.replace("Project-level frequency ", "")
@@ -60,7 +60,7 @@ def violin(m, xlabel, ylabel, isVertical=False, isLog=False, height=3, legend=Tr
     outputPlot = join(parent(parent(realPath('__file__'))), 'OutputPlots/' + xlabel + ylabel + ".pdf").replace(' ', '')
     sns.set(font_scale=1.3)
     sns.set_style("whitegrid")
-    fig, axes = plt.subplots(figsize=(9, height))
+    fig, axes = plt.subplots(figsize=(width, height))
 
     m = dict(sorted(m.items(), key=lambda item: statistics.median(item[1]), reverse=True))
 
@@ -95,7 +95,10 @@ def violin(m, xlabel, ylabel, isVertical=False, isLog=False, height=3, legend=Tr
             plt.legend([red_patch, blue_patch], ['Mean', 'Median'])
 
     if isLog:
-        axes.set(xscale="log")
+        if isVertical:
+            axes.set(yscale="log")
+        else:
+            axes.set(xscale="log")
     if isVertical:
         axes.set_xticks(np.arange(1, len(labels) + 1))
         axes.set_xticklabels(labels, linespacing=0.9)

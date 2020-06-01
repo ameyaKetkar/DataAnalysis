@@ -112,7 +112,7 @@
                     <div class="col-md-12 heading">
                         <ol>
                             {% for mapping in mappings %}
-                            <li><a href="#" onclick="toggle_visibility('{{mapping.name}}');"><i class="fa fa-plus"
+                            <li><a class="menu_links" style="color:red; cursor:pointer" onmouseover="" onclick="toggle_visibility('{{mapping.name}}');"><i class="fa fa-plus"
                                                                                                 aria-hidden="true">
                                 {{mapping.name}}</i></a></li>
                             <ul id="{{mapping.name}}" , style="display: none;">

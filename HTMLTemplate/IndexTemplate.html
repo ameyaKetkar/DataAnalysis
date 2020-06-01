@@ -73,72 +73,82 @@
 					</div><!--/ Logo end -->
 					<nav class="collapse navbar-collapse clearfix" role="navigation">
 						<ul class="nav navbar-nav navbar-right">
-							<li><a href="Pages/projects.html">Projects</a></li>
-							<li><a href="Pages/AllTCA/TypeChangeSummary.html">Popular Type Changes</a></li>
+							<li><a href="P/projects.html">Projects</a></li>
+							<li><a href="P/A/popular.html">Popular Type Changes</a></li>
+							<li><a href="KnownTC.html">Known Type Changes</a></li>
 						</ul>
 					</nav><!--/ Navigation end -->
 				</div><!--/ Row end -->
 			</div><!--/ Container end -->
 		</header><!--/ Header end -->
 
-	<!-- Slider start -->
-		<section id="home" class="no-padding">	
+		<section id="home" class="no-padding">
 			<div id="main-slide" class="cd-hero">
 				<ul class="cd-hero-slider">
 					<li class="selected">
 						<div class="overlay2">
-							<img class="" src="images/slider/grungy.jpg" alt="slider" >
+							<img class="" src="images/slider/grungy.jpg" alt="slider">
 						</div>
 						<div class="cd-full-width">
-							<h2> Refactorings Collected</h2>
-							<h5>Dataset of refactorings reported by RefactoringMiner</h5>
+							<h2>TYPE CHANGES MINED</h2>
+							<h5>Dataset of type changes and refactorings reported by TypeChangeMiner</h5>
 						</div> <!-- .cd-full-width -->
 					</li>
-				</ul> <!--/ cd-hero-slider -->
-			</div><!--/ Main slider end -->    	
-		</section> <!--/ Slider end -->
-	<!-- Counter Strat -->
+				</ul>
+				<!--/ cd-hero-slider -->
+			</div>
+			<!--/ Main slider end -->
+		</section>
+		<!--/ Slider end -->
+		<!-- Counter Strat -->
 		<section class="ts_counter no-padding">
 			<div class="container-fluid">
 				<div class="row facts-wrapper wow fadeInLeft text-center">
 					<div class="facts one col-md-3 col-sm-6">
-						<span class="facts-icon"><i class="fa fa-user"></i></span>
-						<div class="facts-num">
-							<span class="counter">{{NumberOfProjects}}</span>
-						</div>
-						<h3>Projects</h3>
-					</div>
-
-					<div class="facts two col-md-3 col-sm-6">
-					<a href="about.html">
-						<span class="facts-icon"><i class="fa fa-institution"></i></span>
-						<div class="facts-num">
-							<span class="counter">{{NumberOfCommits}}</span>
-						</div>
-						<h3>Commits</h3></a>
-						<h4> - {{NumberOfExceptionCommits}}</h4>
-					</div>
-
-					<div class="facts three col-md-3 col-sm-6">
-						<span class="facts-icon"><i class="fa fa-suitcase"></i></span>
-						<div class="facts-num">
-							<span class="counter">{{NoOfRefactoring}}</span>
-						</div>
-						<h3>Refactorings</h3>
-					</div>
-					<div class="facts three col-md-3 col-sm-6">
-					<a href="examples1.html">
-						<span class="facts-icon"><i class="fa fa-suitcase"></i></span>
-						<div class="facts-num">
-							<span class="counter">{{NumberOfTypeChanges}}</span>
-						</div>
-						<h3>Type Changes</h3>
+						<a href="P/projects.html">
+							<span class="facts-icon"><i class="fa fa-user"></i></span>
+							<div class="facts-num">
+								<span class="counter">129</span>
+							</div>
+							<h3>Projects</h3>
+							<h3>Commits : 416659</h3>
 						</a>
 					</div>
 
+					<div class="facts two col-md-3 col-sm-6">
+						<a href="https://github.com/ChangeType/TypeChangeMiner">
+							<span class="facts-icon"><i class="fa fa-institution"></i></span>
+							<div class="facts-num">
+								<span class="counter">1</span>
+							</div>
+							<h3>Tools</h3>
+						</a>
+					</div>
+
+					<div class="facts three col-md-3 col-sm-6">
+						<a href="P/A/popular.html">
+							<span class="facts-icon"><i class="fa fa-suitcase"></i></span>
+							<div class="facts-num">
+								<span class="counter">1452</span>
+							</div>
+							<h3>Popular Type Changes</h3>
+						</a>
+					</div>
+
+					<div class="facts three col-md-3 col-sm-6">
+						<a href="P/A/Migrations.html">
+							<span class="facts-icon"><i class="fa fa-suitcase"></i></span>
+							<div class="facts-num">
+								<span class="counter">1221</span>
+							</div>
+							<h3>Migrations</h3>
+						</a>
+					</div>
+
+
 				</div>
 				<!-- <div class="gap-60"></div>
-			
+
 				<div class="container container-table">
 					<div class="row vertical-center-row">
 						<div class="text-center col-md-10 col-md-offset-1" >
@@ -154,7 +164,7 @@
 							<div class="text-center col-md-10 col-md-offset-1" >
 								<h3 class="title-border">Examples for Type Changes</h3>
 								<h4>Add Some text</h4>
-	
+
 							</div>
 						</div>
 				</div>
@@ -164,82 +174,82 @@
 							<div class="text-center col-md-10 col-md-offset-1" >
 								<h3 class="title-border">Tools</h3>
 								<h4>Add some text</h4>
-	
+
 							</div>
 						</div>
 				</div> -->
-			
 
 
-			</div><!--/ Container end -->
-		</section><!--/ Counter end -->
-		
-	
+
+			</div>
+			<!--/ Container end -->
+		</section>
+		<!--/ Counter end -->
 
 
-		
-	<!-- Team start -->
-	<!-- <section id="team" class="team">
+
+
+
+
+		<!-- Team start -->
+	<section id="team" class="team">
 		<div class="container">
 			<div class="row">
 				<div class="col-md-12 heading">
 					<span class="title-icon pull-left"><i class="fa fa-weixin"></i></span>
 					<h2 class="title">Our Team <span class="title-desc"></span></h2>
 				</div>
-			</div>Title row end -->
+			</div>
 
-			<!-- <div class="row text-center">
+			<div class="row text-center">
 				<div class="col-md-3 col-sm-6">
 					<div class="team wow slideInLeft">
 						<div class="img-hexagon">
-							<img src="images/team/team1.jpg" alt="">
+							<img src="images/Ameya.png" alt="">
 							<span class="img-top"></span>
 							<span class="img-bottom"></span>
 						</div>
 						<div class="team-content">
 							<h3>Ameya Ketkar</h3>
 							<div class="team-social">
-								<a class="fb" href="#"><i class="fa fa-facebook"></i></a>
-								<a class="twt" href="#"><i class="fa fa-twitter"></i></a>
+								<a class="website" href="https://ameyaketkar.github.io"><i class="fa fa-user"></i></a>
 							</div>
 						</div>
-					</div>	
-				</div>/ Team 1 end -->
-				<!-- <div class="col-md-3 col-sm-6">
+					</div>
+				</div>
+			<div class="col-md-3 col-sm-6">
 					<div class="team wow slideInLeft">
 						<div class="img-hexagon">
-							<img src="images/team/team2.jpg" alt="">
+							<img src="images/tsantalis.png" alt="">
 							<span class="img-top"></span>
 							<span class="img-bottom"></span>
 						</div>
 						<div class="team-content">
 							<h3>Nikolaos Tsantalis</h3>
 							<div class="team-social">
-								<a class="fb" href="#"><i class="fa fa-facebook"></i></a>
-								<a class="twt" href="#"><i class="fa fa-twitter"></i></a>
+								<a class="website" href="https://users.encs.concordia.ca/~nikolaos/"><i class="fa fa-user"></i></a>
 							</div>
 						</div>
 					</div>
-				</div>/ Team 2 end -->
-				<!-- <div class="col-md-3 col-sm-6">
+				</div>
+				 <div class="col-md-3 col-sm-6">
 					<div class="team wow slideInRight">
 						<div class="img-hexagon">
-							<img src="images/team/team3.jpg" alt="">
+							<img src="images/danny.png" alt="">
 							<span class="img-top"></span>
 							<span class="img-bottom"></span>
 						</div>
 						<div class="team-content">
 							<h3>Danny Dig</h3>
 							<div class="team-social">
-								<a class="fb" href="#"><i class="fa fa-facebook"></i></a>
-								<a class="twt" href="#"><i class="fa fa-twitter"></i></a>
+								<a class="website" href="https://danny.cs.colorado.edu"><i class="fa fa-user"></i></a>
 							</div>
 						</div>
 					</div>
-				</div>/ Team 3 end -->
-			<!--</div> Content row end -->
-		<!--<</div>/ Container end -->
-    <!--<</section>/ Team end -->
+				</div>
+			</div>
+		</div>
+    </section>
 
 	<!-- Copyright start -->
 	<!-- Javascript Files

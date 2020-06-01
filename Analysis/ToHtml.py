@@ -1,19 +1,30 @@
-import html
 import os
 import shutil
-from collections import Counter as C
 from collections import namedtuple as nt
-
+from os.path import dirname as parent
 # import OldModels.OldRW as OldRW
+from os.path import join
+from os.path import realpath as realpath
+from pydoc import html
+from collections import Counter as C
+
 from jinja2 import Environment, FileSystemLoader
 
 from Analysis.RW import readAll
-from PrettyPrint import pretty, prettyNameSpace1
+from PrettyPrint import pretty, prettyNameSpace1, getCleanMappingNames
 
 TypeChange = nt('TypeChange', ['before', 'after'])
 
 processedCodeMapping = readAll("ProcessedCodeMapping", "ProcessedCodeMapping",
                                protos="/Users/ameya/Research/TypeChangeStudy/TypeChangeMiner/Output/CodeMapping/")
+
+fileDir = parent(parent(parent(realpath('__file__'))))
+pathToTypeChanges = join(fileDir, 'TypeChangeMiner/Output/')
+
+
+LinkTracker = nt('LinkTracker', ['TypeChange','Project', 'Link'])
+
+tci_project_tracker = []
 
 
 def getStatementMapping(typechange):
@@ -24,7 +35,7 @@ def getStatementMapping(typechange):
     return []
 
 
-pathToPages = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath('__file__'))), "docs/Pages")
+pathToPages = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath('__file__'))), "docs/P")
 pathToProjectsHtml = os.path.join(pathToPages, "projects.html")
 pathToIndexFile = os.path.join(os.path.dirname(pathToPages), "index.html")
 
@@ -37,8 +48,9 @@ indexTemplate = env.get_template("HTMLTemplate/IndexTemplate.html")
 TypeChangeSummarytemplate = env.get_template("HTMLTemplate/TypeChangeSummaryTemplate.html")
 ProjectTypeChangeSummarytemplate = env.get_template("HTMLTemplate/ProjectTypeChangeSummaryTemplate.html")
 templateTCI = env.get_template("HTMLTemplate/TypeChangeInstances.html")
+migrationTemplateTCI = env.get_template("HTMLTemplate/MigrationTemplate.html")
 
-projects = readAll('Projects', 'Project')
+projects = readAll('Projects', 'Project')#[:10]
 items = []
 
 if os.path.isdir(pathToPages):
@@ -49,6 +61,9 @@ except OSError:
     print("Could not make directory")
 
 noOfProjects, noOfCommits, noOfRefactorings, noOfTypeChanges, noOfCommitsException = 0, 0, 0, 0, 0
+
+def generateCommitLink(gitURL:str, sha:str):
+    return gitURL.replace(".git","") + "/commit/" + sha;
 
 for p in projects:
     noOfProjects += 1
@@ -84,8 +99,8 @@ for p in projects:
                                   noOfRefactoring=str(r),
                                   typeChangeFound='Yes' if cmt.isTypeChangeReported else 'No',
                                   dependenciesChanged='Yes' if depChanged else 'No',
-                                  isException='Yes' if (cmt.exception != '') else 'No',
-                                  exception=cmt.exception if cmt.exception != '' else '-'))
+                                  Show = r > 0 or depChanged
+                                  ))
 
         if cmt.exception != '':
             noOfCommitsException += 1
@@ -125,7 +140,8 @@ for p in projects:
                                                   Removed=removed if removed is not [] else None,
                                                   RemovedNum=len(removed),
                                                   Updated=updated if updated is not [] else None,
-                                                  UpdatedNum=len(updated)))
+                                                  UpdatedNum=len(updated),
+                                                  url=generateCommitLink(p.url,cmt.sha)))
                 fh.write('\n')
                 fh.close()
 
@@ -188,9 +204,10 @@ for p in projects:
         mappings = []
 
         for key, val in minedReplacements.items():
-            mappings.append(dict(name=key.replace("\\percent", ""), instances=val))
+            mappings.append(dict(name=getCleanMappingNames(key), instances=val))
 
-        pathToProjectTCI = os.path.join(os.path.join(pathToPages, p.name), "tci_project" + str(tciCounter) + ".html")
+        tciproject = "tci_project" + str(tciCounter) + ".html"
+        pathToProjectTCI = os.path.join(os.path.join(pathToPages, p.name), tciproject)
         with open(pathToProjectTCI, 'a') as fh:
             fh.write(templateTCI.render(mappings=mappings, TypeChange=html.escape(k.before + " to " + k.after),
                                         hierarchy=typeChange_hierarchy[k] if k in typeChange_hierarchy.keys() else "-",
@@ -199,13 +216,15 @@ for p in projects:
                                         namespace=typeChange_nameSpace[k] if k in typeChange_nameSpace.keys() else "-",
                                         noOfInst=len(v), noOfCommits=len(typeChanges_commit[k]),
                                         noOfProjects=str(typeChange_project[k]),
-                                        LinkToProject="..\\"+ p.name))
+                                        LinkToProject="..\\" + p.name))
+            tci_project_tracker.append(LinkTracker(TypeChange= k, Project=p.name, Link=pathToProjectTCI))
             fh.write('\n')
             fh.close()
         tciCounter += 1
 
         typeChangeSummary.append(
-            dict(b4=html.escape(k.before), after=html.escape(k.after), tcisLink=pathToProjectTCI, noOfTCI=len(v),
+            dict(b4=html.escape(k.before), after=html.escape(k.after), tcisLink=p.name + "/" + tciproject,
+                 noOfTCI=len(v),
                  noOfCommits=len(typeChanges_commit[k]),
                  noOfProjects=len(typeChange_project[k]),
                  hierarchy=typeChange_hierarchy[k] if k in typeChange_hierarchy.keys() else "-",
@@ -214,7 +233,8 @@ for p in projects:
 
     pathToProjectCommits = os.path.join(pathToPages, 'TypeChange' + p.name + '.html')
     with open(pathToProjectCommits, 'a') as fh:
-        fh.write(ProjectTypeChangeSummarytemplate.render(typeChangeAnalysisList=typeChangeSummary, LinkToProject=p.name))
+        fh.write(
+            ProjectTypeChangeSummarytemplate.render(typeChangeAnalysisList=typeChangeSummary, LinkToProject=p.name))
         fh.write('\n')
         fh.close()
 
@@ -242,7 +262,7 @@ items = []
 ############################################################################################################################
 
 
-pathToPages = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath('__file__'))), "docs/Pages/AllTCA/")
+pathToPages = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath('__file__'))), "docs/P/A/")
 try:
     os.mkdir(pathToPages)
 except OSError:
@@ -328,9 +348,10 @@ for k, v in typeChanges.items():
             pop_typeChange_nameSpace += C({'InvolvesExternal': 1})
 
         for key, val in minedReplacements.items():
-            mappings.append(dict(name=key.replace("\\percent", ""), instances=val))
+            mappings.append(dict(name=getCleanMappingNames(key), instances=val))
 
-        pathToProjectTCI = os.path.join(pathToPages, "tci" + str(tciCounter) + ".html")
+        pathToTci = "tci" + str(tciCounter) + ".html"
+        pathToProjectTCI = os.path.join(pathToPages, pathToTci)
         with open(pathToProjectTCI, 'a') as fh:
             fh.write(templateTCI.render(mappings=mappings, TypeChange=html.escape(k.before + " to " + k.after),
                                         hierarchy=typeChange_hierarchy[k] if k in typeChange_hierarchy.keys() else "-",
@@ -339,13 +360,13 @@ for k, v in typeChanges.items():
                                         namespace=typeChange_nameSpace[k] if k in typeChange_nameSpace.keys() else "-",
                                         noOfInst=len(v), noOfCommits=len(typeChanges_commit[k]),
                                         noOfProjects=str(typeChange_project[k]),
-                                        LinkToProject='TypeChangeSummary.html'))
+                                        LinkToProject='popular.html'))
             fh.write('\n')
             fh.close()
         tciCounter += 1
 
         typeChangeSummary.append(
-            dict(b4=html.escape(k.before), after=html.escape(k.after), tcisLink=pathToProjectTCI, noOfTCI=len(v),
+            dict(b4=html.escape(k.before), after=html.escape(k.after), tcisLink=pathToTci, noOfTCI=len(v),
                  noOfCommits=len(typeChanges_commit[k]),
                  noOfProjects=len(typeChange_project[k]),
                  hierarchy=typeChange_hierarchy[k] if k in typeChange_hierarchy.keys() else "-",
@@ -354,8 +375,57 @@ for k, v in typeChanges.items():
 
 typeChangeSummary = sorted(typeChangeSummary, key=lambda i: (i['noOfTCI']), reverse=True)
 
-pathToProjectCommits = os.path.join(pathToPages, "TypeChangeSummary.html")
+pathToProjectCommits = os.path.join(pathToPages, "popular.html")
 with open(pathToProjectCommits, 'a') as fh:
     fh.write(TypeChangeSummarytemplate.render(typeChangeAnalysisList=typeChangeSummary))
     fh.write('\n')
     fh.close()
+
+pathToMigrationProtos = join(pathToTypeChanges, 'Migration')
+
+pr_cmt = {}
+for pr in projects:
+    typeChangeCommits = readAll("TypeChangeCommit_" + pr.name, "TypeChangeCommit", protos=pathToTypeChanges)
+    for tc in typeChangeCommits:
+        pr_cmt.setdefault(pr.name, []).append(tc.sha)
+
+
+def findCommit(sha):
+    for prj, cmt in pr_cmt.items():
+        if sha in cmt:
+            return prj
+    return None
+
+def getLink(projectName, before, after):
+    for t in tci_project_tracker:
+        if t.TypeChange.before == before and t.TypeChange.after == after and t.Project == projectName:
+            return t.Link
+    return ""
+
+
+def getProjectURL(projectName):
+    for p in projects:
+        if p.name == projectName:
+            return p.url
+    return ""
+
+instancess = {}
+for ps in projects:
+    migrationss = readAll('Migration_' + ps.name, 'Migration', protos=pathToMigrationProtos)
+    for mr in migrationss:
+        for ct in mr.commitToType:
+            for tt in ct.toType:
+                instancess.setdefault((pretty(mr.type), pretty(tt)), []).append(
+                    dict(commit=ct.sha, project=ps.name, namespace=prettyNameSpace1(mr.namespace), Link=getLink(ps.name, pretty(mr.type), pretty(tt))
+                         , commitURL=generateCommitLink(getProjectURL(ps.name), ct.sha)))
+    # return instancess
+
+migrationInfo = []
+for ft, ins in instancess.items():
+    if len(list(dict.fromkeys(list(map(lambda x: x['project'], ins))))) > 1:
+        migrationInfo.append(dict(fromType=html.escape(ft[0]), toType=html.escape(ft[1]), namespace=ins[0]['namespace'],
+                                  instances=list(ins), name=ft[0] + ft[1], num=len(list(ins))))
+
+with open(join(pathToPages, 'Migrations.html'), 'a') as fh:
+    fh.write(migrationTemplateTCI.render(migrations=migrationInfo))
+fh.close()
