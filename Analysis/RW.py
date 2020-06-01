@@ -2,13 +2,13 @@ from os.path import join as join
 from os.path import dirname as parent
 from os.path import realpath as realPath
 
-from TheWorld_pb2 import TheWorld
-from TypeChangeCommit_pb2 import TypeChangeCommit
+from Models.Models.TheWorld_pb2 import TheWorld
+from Models.Models.TypeChangeCommit_pb2 import TypeChangeCommit
 from Models.Models.CommitInfo_pb2 import CommitInfo
 from Models.Models.Project_pb2 import Project
 from Models.Models.ProcessedCodeMappings_pb2 import ProcessedCodeMappings
 from Models.Models.MigrationData_pb2 import MigrationData
-from Verification_pb2 import Verification
+from Models.Models.Verification_pb2 import Verification
 
 
 def readFile(filename):
@@ -21,7 +21,7 @@ def readFile(filename):
         # print(filename,  ' Not found')
         return ''
 
-fileDir = parent(parent(parent(realPath('__file__'))))
+fileDir = parent(parent((realPath('__file__'))))
 pathToProtos = join(fileDir, 'TypeChangeMiner/Input/ProtosOut/')
 
 

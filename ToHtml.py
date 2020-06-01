@@ -9,9 +9,8 @@ from pydoc import html
 from collections import Counter as C
 
 from jinja2 import Environment, FileSystemLoader
-
 from Analysis.RW import readAll
-from PrettyPrint import pretty, prettyNameSpace1, getCleanMappingNames
+from Models.Models.PrettyPrint import pretty, prettyNameSpace1, getCleanMappingNames
 
 TypeChange = nt('TypeChange', ['before', 'after'])
 
@@ -35,11 +34,11 @@ def getStatementMapping(typechange):
     return []
 
 
-pathToPages = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath('__file__'))), "docs/P")
+pathToPages = os.path.join(os.path.dirname((os.path.realpath('__file__'))), "docs/P")
 pathToProjectsHtml = os.path.join(pathToPages, "projects.html")
 pathToIndexFile = os.path.join(os.path.dirname(pathToPages), "index.html")
 
-env = Environment(loader=FileSystemLoader(os.path.dirname(os.path.dirname(os.path.realpath('__file__')))))
+env = Environment(loader=FileSystemLoader(os.path.dirname(os.path.dirname('__file__'))))
 projectTemplate = env.get_template("HTMLTemplate/ProjectTemplate.html")
 commitTemplate = env.get_template("HTMLTemplate/CommitSummaryTemplate.html")
 detailedCommitTemplate = env.get_template("HTMLTemplate/DetailCommitTemplate.html")
@@ -52,6 +51,9 @@ migrationTemplateTCI = env.get_template("HTMLTemplate/MigrationTemplate.html")
 
 projects = readAll('Projects', 'Project')#[:10]
 items = []
+
+print('Projects')
+print(projects)
 
 if os.path.isdir(pathToPages):
     shutil.rmtree(pathToPages)
@@ -262,7 +264,7 @@ items = []
 ############################################################################################################################
 
 
-pathToPages = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath('__file__'))), "docs/P/A/")
+pathToPages = os.path.join(os.path.dirname((os.path.realpath('__file__'))), "docs/P/A/")
 try:
     os.mkdir(pathToPages)
 except OSError:
