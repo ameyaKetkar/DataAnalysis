@@ -14,12 +14,15 @@ from Models.Models.PrettyPrint import pretty, prettyNameSpace1, getCleanMappingN
 
 TypeChange = nt('TypeChange', ['before', 'after'])
 
-processedCodeMapping = readAll("ProcessedCodeMapping", "ProcessedCodeMapping",
-                               protos="/Users/ameya/Research/TypeChangeStudy/TypeChangeMiner/Output/CodeMapping/")
+
 
 fileDir = parent(parent(parent(realpath('__file__'))))
-pathToTypeChanges = join(fileDir, 'TypeChangeMiner/Output/')
+pathToTypeChangeMinerOutput = join(fileDir, 'TypeChangeMiner/Output/')
 
+
+processedCodeMapping = readAll("ProcessedCodeMapping", "ProcessedCodeMapping",
+                               protos=join(pathToTypeChangeMinerOutput,"CodeMapping"))
+#                               protos="/Users/ameya/Research/TypeChangeStudy/TypeChangeMiner/Output/CodeMapping/")
 
 LinkTracker = nt('LinkTracker', ['TypeChange','Project', 'Link'])
 
@@ -148,7 +151,7 @@ for p in projects:
                 fh.close()
 
     typeChangeCommits = readAll("TypeChangeCommit_" + p.name, "TypeChangeCommit",
-                                protos="/Users/ameya/Research/TypeChangeStudy/TypeChangeMiner/Output/")
+                                protos=pathToTypeChangeMinerOutput)
 
     typeChanges = {}
     typeChanges_commit = {}
@@ -290,7 +293,7 @@ print(x)
 
 for p in projects:
     typeChangeCommits = readAll("TypeChangeCommit_" + p.name, "TypeChangeCommit",
-                                protos="/Users/ameya/Research/TypeChangeStudy/TypeChangeMiner/Output/")
+                                protos=pathToTypeChangeMinerOutput)
 
     commitSummary = []
     for cmt in typeChangeCommits:
@@ -383,11 +386,11 @@ with open(pathToProjectCommits, 'a') as fh:
     fh.write('\n')
     fh.close()
 
-pathToMigrationProtos = join(pathToTypeChanges, 'Migration')
+pathToMigrationProtos = join(pathToTypeChangeMinerOutput, 'Migration')
 
 pr_cmt = {}
 for pr in projects:
-    typeChangeCommits = readAll("TypeChangeCommit_" + pr.name, "TypeChangeCommit", protos=pathToTypeChanges)
+    typeChangeCommits = readAll("TypeChangeCommit_" + pr.name, "TypeChangeCommit", protos=pathToTypeChangeMinerOutput)
     for tc in typeChangeCommits:
         pr_cmt.setdefault(pr.name, []).append(tc.sha)
 
