@@ -1,9 +1,9 @@
 from collections import Counter as C
 
-from ElementKind_pb2 import ElementKind
-from PrettyPrint import pretty, prettyTypeKind, prettyElementKind, prettyNameSpace1
-from TheWorld_pb2 import TheWorld
-from TypeChangeAnalysis_pb2 import TypeChangeAnalysis
+from Models.Models.ElementKind_pb2 import ElementKind
+from Models.Models.PrettyPrint import pretty, prettyTypeKind, prettyElementKind, prettyNameSpace1
+from Models.Models.TheWorld_pb2 import TheWorld
+from Models.Models.TypeChangeAnalysis_pb2 import TypeChangeAnalysis
 from collections import namedtuple as nt
 
 TypeChange = nt('TypeChange', ['before', 'after'])
