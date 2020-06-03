@@ -45,7 +45,7 @@ env = Environment(loader=FileSystemLoader(fileDir))
 projectTemplate = env.get_template("HTMLTemplate/ProjectTemplate.html")
 commitTemplate = env.get_template("HTMLTemplate/CommitSummaryTemplate.html")
 detailedCommitTemplate = env.get_template("HTMLTemplate/DetailCommitTemplate.html")
-indexTemplate = env.get_template("HTMLTemplate/IndexTemplate.html")
+indexTemplate = env.get_template("HTMLTemplate/IndexTemplate1.html")
 
 TypeChangeSummarytemplate = env.get_template("HTMLTemplate/TypeChangeSummaryTemplate.html")
 ProjectTypeChangeSummarytemplate = env.get_template("HTMLTemplate/ProjectTypeChangeSummaryTemplate.html")
