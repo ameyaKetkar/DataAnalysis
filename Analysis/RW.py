@@ -31,8 +31,12 @@ def readAll(fileName, kind, protos=pathToProtos):
     if(sizeFile == ''):
         # print(fileName, " Not found")
         return []
+
     sizes = list(map(lambda s: int(s), filter(lambda s: s != '', sizeFile.split(" "))))
     buf = join(protos, fileName + '.txt')
+    print(len(sizes))
+    if len(sizes) == 1 :
+        return readFile(buf)
     l = []
     with open(buf, 'rb') as f:
         buf = f.read()
