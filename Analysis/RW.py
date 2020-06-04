@@ -29,9 +29,10 @@ def readAll(fileName, kind, protos=pathToProtos):
     print("reading from " + pathToProtos)
     sizeFile = readFile(join(protos, fileName + 'BinSize.txt'))
     if(sizeFile == ''):
-        # print(fileName, " Not found")
+        print("ow!", fileName)
         return []
 
+    print(sizeFile.split(" "))
     sizes = list(map(lambda s: int(s), filter(lambda s: s != '', sizeFile.split(" "))))
     buf = join(protos, fileName + '.txt')
     print(len(sizes))
