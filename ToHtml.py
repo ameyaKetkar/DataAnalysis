@@ -52,7 +52,7 @@ ProjectTypeChangeSummarytemplate = env.get_template("HTMLTemplate/ProjectTypeCha
 templateTCI = env.get_template("HTMLTemplate/TypeChangeInstances.html")
 migrationTemplateTCI = env.get_template("HTMLTemplate/MigrationTemplate.html")
 
-projects = readAll('Projects', 'Project')#[:10]
+projects = readAll('projects', 'Project')#[:10]
 items = []
 
 print('Projects')

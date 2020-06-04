@@ -17,8 +17,8 @@ def readFile(filename):
         s = filehandle.read()
         filehandle.close()
         return s
-    except:
-        # print(filename,  ' Not found')
+    except Exception as e: 
+        print(str(e))
         return ''
 
 fileDir = parent(parent((realPath('__file__'))))
@@ -36,8 +36,6 @@ def readAll(fileName, kind, protos=pathToProtos):
     sizes = list(map(lambda s: int(s), filter(lambda s: s != '', sizeFile.split(" "))))
     buf = join(protos, fileName + '.txt')
     print(len(sizes))
-    if len(sizes) == 1 :
-        return readFile(buf)
     l = []
     with open(buf, 'rb') as f:
         buf = f.read()
