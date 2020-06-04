@@ -26,6 +26,7 @@ pathToProtos = join(fileDir, 'TypeChangeMiner/Input/ProtosOut/')
 
 
 def readAll(fileName, kind, protos=pathToProtos):
+    print("reading from " + pathToProtos)
     sizeFile = readFile(join(protos, fileName + 'BinSize.txt'))
     if(sizeFile == ''):
         # print(fileName, " Not found")
