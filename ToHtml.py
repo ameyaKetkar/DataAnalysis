@@ -414,23 +414,23 @@ def getProjectURL(projectName):
             return p.url
     return ""
 
-instancess = {}
-for ps in projects:
-    migrationss = readAll('Migration_' + ps.name, 'Migration', protos=pathToMigrationProtos)
-    for mr in migrationss:
-        for ct in mr.commitToType:
-            for tt in ct.toType:
-                instancess.setdefault((pretty(mr.type), pretty(tt)), []).append(
-                    dict(commit=ct.sha, project=ps.name, namespace=prettyNameSpace1(mr.namespace), Link=getLink(ps.name, pretty(mr.type), pretty(tt))
-                         , commitURL=generateCommitLink(getProjectURL(ps.name), ct.sha)))
-    # return instancess
+# instancess = {}
+# for ps in projects:
+#     migrationss = readAll('Migration_' + ps.name, 'Migration', protos=pathToMigrationProtos)
+#     for mr in migrationss:
+#         for ct in mr.commitToType:
+#             for tt in ct.toType:
+#                 instancess.setdefault((pretty(mr.type), pretty(tt)), []).append(
+#                     dict(commit=ct.sha, project=ps.name, namespace=prettyNameSpace1(mr.namespace), Link=getLink(ps.name, pretty(mr.type), pretty(tt))
+#                          , commitURL=generateCommitLink(getProjectURL(ps.name), ct.sha)))
+#     # return instancess
 
-migrationInfo = []
-for ft, ins in instancess.items():
-    if len(list(dict.fromkeys(list(map(lambda x: x['project'], ins))))) > 1:
-        migrationInfo.append(dict(fromType=html.escape(ft[0]), toType=html.escape(ft[1]), namespace=ins[0]['namespace'],
-                                  instances=list(ins), name=ft[0] + ft[1], num=len(list(ins))))
+# migrationInfo = []
+# for ft, ins in instancess.items():
+#     if len(list(dict.fromkeys(list(map(lambda x: x['project'], ins))))) > 1:
+#         migrationInfo.append(dict(fromType=html.escape(ft[0]), toType=html.escape(ft[1]), namespace=ins[0]['namespace'],
+#                                   instances=list(ins), name=ft[0] + ft[1], num=len(list(ins))))
 
-with open(join(pathToPages, 'Migrations.html'), 'a') as fh:
-    fh.write(migrationTemplateTCI.render(migrations=migrationInfo))
-fh.close()
+# with open(join(pathToPages, 'Migrations.html'), 'a') as fh:
+#     fh.write(migrationTemplateTCI.render(migrations=migrationInfo))
+# fh.close()
